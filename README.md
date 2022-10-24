@@ -1,1 +1,1 @@
-# Prompt-VariablesProjectDocumentationGPT-3
+# PromptVariablesProjectDocumentationGPT-3
