@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Prompt Variables Project</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: prompt-variable-module.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>//TEAM BRAZIL
+const axiosLib = require("axios");
+const BASE_URL = "http://localhost:3000";
+const DEFAULT_VARIABLE = "default";
+
+
+/**
+ * Main function responsible for building the new prompt
+ * @param {string} user - Identification of the user who interacts with the flow
+ * @param {string} conversation - Id of the current flow being used
+ * @param {string} prompt - Instruction passed to the gpt3 api
+ * @returns {string}
+ */
+async function main(user, conversation, prompt) {
+    const extractedVariables = extractVariables(prompt);
+
+    const variables = mountVariables(extractedVariables);
+
+    if (variables.length == 0) {
+        return prompt;
+    }
+
+    const responses = await getVariablesValues(user, conversation, variables);
+
+    const newPrompt = mountPhraseToGptResponse(responses, extractedVariables, prompt);
+
+    return newPrompt;
+}
+
+/**
+ * Array containing the text of the variables entered at the prompt, as well as their index and other data
+ * @param {string} prompt - Instruction passed to the gpt3 api
+ * @returns {array}
+ */
+function extractVariables(prompt) {
+    const regex = '£{(.*?)}';
+    const r = new RegExp(regex, 'g');
+    const array = [...prompt.matchAll(r)];
+
+    return array;
+}
+
+/**
+ * Returns an array containing only the text of the variables entered at the prompt
+ * @param {array} extractedVariables - Array containing the text of the variables entered at the prompt, as well as their index and other data
+ * @returns {array}
+ */
+function mountVariables(extractedVariables) {
+    let variables = [];
+    for (let variable of extractedVariables) {
+        variables.push(variable[1]);
+    }
+
+    return variables;
+}
+
+
+/**
+ * Returns an array with the contents assigned to the variables entered at the prompt
+ * @param {string} user - Identification of the user who interacts with the flow
+ * @param {string} conversation - Id of the current flow being used
+ * @param {array} variables - Array containing only the text of the variables entered at the prompt
+ * @param {string} req - Contains the settings for the request in the api
+ * @returns {array}
+ */
+async function getVariablesValues(user, conversation, variables, req = request) {
+    let responses = [];
+    for (let variable of variables) {
+        const url = mountUrl(user, conversation, variable);
+        const response = await req(url, "GET");
+        responses.push(response);
+    }
+
+    return responses;
+}
+
+/**
+ * Assemble the full url of the api that will be used to make the request
+ * @param {string} user - Identification of the user who interacts with the flow
+ * @param {string} conversation - Id of the current flow being used
+ * @param {string} name - Name of the current variable being sent in the request to the api
+ * @returns {url}
+ */
+function mountUrl(user, conversation, name) {
+    return BASE_URL.concat(`/api/variables/${user}/${conversation}/${name}`);
+}
+
+/**
+ * Returns the contents of the variable sent in the request to the api
+ * @param {string} url - Full link address to make the request in the api
+ * @param {string} method - Method used to make the request
+ * @param {object} body - Object JSON returned
+ * @param {string} axios - Promises-based HTTP client for making requests
+ * @returns {string}
+ */
+async function request(url, method, body = undefined, axios = axiosLib) {
+    const option = {
+        url: url,
+        method: method,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        data: JSON.stringify(body)
+    };
+
+    try {
+        const result = await axios(option);
+        return result.data.value;
+
+    } catch (error) {
+        return DEFAULT_VARIABLE;
+    }
+}
+
+
+/**
+ * Assemble the text with the instructions to be sent to GPT-3
+ * @param {array} responses - array with the contents assigned to the variables entered at the prompt
+ * @param {array} extractedVariables - Array containing the text of the variables entered at the prompt, as well as their index and other data
+ * @param {string} prompt - Instruction passed to the gpt3 api
+ * @returns {string}
+ */
+function mountPhraseToGptResponse(responses, extractedVariables, prompt) {
+    let variables = [];
+    for (let variable of extractedVariables) {
+        variables.push(variable[0]);
+    }
+
+    let i = 0;
+    for (let variable of variables) {
+        prompt = prompt.replace(variable, responses[i]);
+        i++;
+    }
+
+    return prompt;
+}
+
+module.exports = {
+    extractVariables,
+    mountVariables,
+    getVariablesValues,
+    request,
+    mountUrl,
+    mountPhraseToGptResponse,
+    main
+}
+//TEAM BRAZIL</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#extractVariables">extractVariables</a></li><li><a href="global.html#getVariablesValues">getVariablesValues</a></li><li><a href="global.html#main">main</a></li><li><a href="global.html#mountPhraseToGptResponse">mountPhraseToGptResponse</a></li><li><a href="global.html#mountUrl">mountUrl</a></li><li><a href="global.html#mountVariables">mountVariables</a></li><li><a href="global.html#request">request</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Developed by Team Brazil - Company Quanyx Soft House
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
